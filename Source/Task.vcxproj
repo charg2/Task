@@ -122,6 +122,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
       <BuildStlModules>true</BuildStlModules>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,6 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Concepts.hpp" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="Task.hpp" />
     <ClInclude Include="Vector3.hpp" />
   </ItemGroup>

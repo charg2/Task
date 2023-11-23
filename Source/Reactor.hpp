@@ -8,7 +8,7 @@ class Reactor
     /// <summary>
     /// 태스크 큐 타입 정의
     /// </summary>
-    using TaskQueue = concurrency::concurrent_queue< ITask >;
+    using TaskQueue = concurrency::concurrent_queue< ITask* >;
 
 public:
     void Do()
@@ -16,67 +16,76 @@ public:
         std::cout << "Do" << std::endl;
     }
 
-    void DoDo( Vector3&& Vector3 )
+    void DoDo( Vector3 Vector3 )
     {
         std::cout << "DoDo" << std::endl;
     }
 
-    void DoDo2( Vector3& Vector3 )
+    void DoDo2( Vector3& vector3 )
     {
-        std::cout << "DoDo2" << std::endl;
+        std::cout << __FUNCDNAME__ << std::endl;
     }
 
     void DoDo3( const Vector3& Vector3 )
     {
-        std::cout << "DoDo3" << std::endl;
+        std::cout << __FUNCDNAME__ << std::endl;
     }
 
-    void DoDo4( Vector3&& Vector3 )
+    void DoDo34( const Vector3& fromPos, const Vector3& toPos )
     {
-        std::cout << "DoDo4" << std::endl;
+        std::cout << __FUNCDNAME__ << std::endl;
     }
 
-    void DoDo5( std::shared_ptr< Vector3 >&& vector3 )
+    void MoveTo( const Vector3& fromPos, const Vector3& toPos )
     {
-        std::cout << "DoDo5" << std::endl;
+        std::cout << __FUNCDNAME__ << std::endl;
+    }
+
+    void MoveTo( Vector3& Vector3 )
+    {
+        std::cout << __FUNCDNAME__ << std::endl;
+    }
+
+    void MoveTo( Vector3 Vector3 )
+    {
+        std::cout << __FUNCDNAME__ << std::endl;
+    }
+
+    void MoveTo( std::shared_ptr< Vector3 >&& vector3 )
+    {
+        std::cout << __FUNCDNAME__ << std::endl;
     }
 
 public:
-    template< typename T, typename... Args >
-    auto RunTask( void ( T::* memfunc )( Args... ), Args&&... args )
-    {
-        std::cout << "---------------------------------------" << __FUNCDNAME__ << std::endl;
-
-        auto m = MethodTask< T, Args...>( static_cast< T* >( this ), memfunc, std::forward< Args >( args )... );
-        m();
-        std::cout << "메서드: " << sizeof( m ) << std::endl;
-
-        // _taskQueue.push( m );
-
-
-        return;
-    }
-
+    /// <summary>
+    /// 작업을 실행한다.
+    /// </summary>
     template< typename... Args, std::invocable< Args... > TLambda >
     auto RunTask( TLambda&& lambda, Args&&... args )
     {
-        std::cout << "---------------------------------------" << __FUNCDNAME__ << std::endl;
+        _taskQueue.push( new LambdaTask< TLambda, Args... >(
+            std::forward< TLambda >( lambda ), 
+            std::forward< Args >( args )... ) );
+    }
 
-        auto l = LambdaTask< TLambda, Args... >( std::forward< TLambda >( lambda ), std::forward< Args >( args )... );
-        l();
-        
-        std::cout << "람다: " << sizeof( l ) << std::endl;
-
-        // _taskQueue.push( l );
-
-        return;
+    /// <summary>
+    /// 작업을 비운다
+    /// </summary>
+    auto Flush()
+    {
+        ITask* task;
+        while ( _taskQueue.try_pop( task ) )
+        {
+            task->Run();
+            delete task;
+        }
     }
 
 private:
     /// <summary>
     /// 태스크 큐
     /// </summary>
-    concurrency::concurrent_queue< ITask > _taskQueue;
+    TaskQueue _taskQueue;
 };
 
 using ReactorPtr = std::shared_ptr< Reactor >;
